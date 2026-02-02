@@ -64,7 +64,6 @@
       }
     </style>
   </head>
-<body>
   <body class="zen-kaku-gothic-new-light">
     <div class="contents">
       <h1>なんでもメロスコンバータ - Dougubako</h1>
@@ -79,7 +78,7 @@
         <label><input type="checkbox" id="wrapP" checked> pタグで囲む</label>
       </div>
 
-      <button py-click="extract_py()">メロス化する</button>
+      <button py-click="extract_py">メロス化する</button>
 
         <div id="resultWrapper" style="display:none;" color=white>
           <div id="copyBtn" onclick="copyResult()">コピー</div>
@@ -112,7 +111,7 @@
       from pyodide.http import open_url
       from js import document
       
-      df = pd.read_csv(open_url("merosukaiseki.csv"), encoding="utf-8")
+      df = pd.read_csv(open_url("./merosukaiseki.csv"), encoding="utf-8")
       
       pos_map = {
           "補助記号-読点": "dokuten",
@@ -166,7 +165,7 @@
       <p>
         <a href="https://midomo.neocities.org/">Home</a>▸
         <a href="https://midomo.neocities.org/dougubako/dougubako">道具箱</a>▸
-        Soundcloud引用
+        なんでもメロスコンバータ
       </p>
     </div>
   </body>
