@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>なんでもメロスコンバータ - 道具箱｜ここはmidomoの自由なことをするホームページなので、タイトルをどれだけ長くできるか挑戦してみます。楽市楽座。そう考えれば、最近のなろう系作品もこのようにしてタイトルが長くなっているのかもしれませんね。</title>
+    <link href="https://midomo.neocities.org/style.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@300;400&amp;display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://pyscript.net/releases/2024.1.1/core.css" />
+    <py-config>
+    packages = ["pandas"]
+    </py-config>
+    <script type="module" src="https://pyscript.net/releases/2024.1.1/core.js"></script>
+
+
+
+    <style>
+      #inputWrapper {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      #clearBtn {
+        cursor: pointer;
+        background: #eee;
+        border: 1px solid #ccc;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-weight: bold;
+        user-select: none;
+      }
+      #clearBtn:hover {
+        background: #ddd;
+      }
+
+      /* コピー部分 */
+      #resultWrapper {
+        margin-top: 12px;
+        padding: 10px;
+        border: 1px solid #ddd;
+        background: #fafafa;
+        border-radius: 6px;
+      }
+      #copyBtn {
+        float: right;
+        cursor: pointer;
+        background: #eee;
+        border: 1px solid #ccc;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-size: 12px;
+        user-select: none;
+        color: black;
+      }
+      #copyBtn:hover {
+        background: #ddd;
+      }
+      #result {
+        white-space: pre-wrap;
+        font-family: monospace;
+        margin-top: 6px;
+        color: black;
+      }
+    </style>
+  </head>
+<body>
+  <body class="zen-kaku-gothic-new-light">
+    <div class="contents">
+      <h1>なんでもメロスコンバータ - Dougubako</h1>
+      <p>てきとう。品詞とかごっちゃごちゃ。エンタメとして使ってね</p>
+      
+      <div id="inputWrapper">
+        <input id="urlInput" type="text" placeholder="メロス化したい文章を入力" style="flex:1;">
+        <div id="clearBtn" onclick="clearInput()">✕</div>
+      </div>
+
+      <div>
+        <label><input type="checkbox" id="wrapP" checked> pタグで囲む</label>
+      </div>
+
+      <button py-click="extract_py()">メロス化する</button>
+
+        <div id="resultWrapper" style="display:none;" color=white>
+          <div id="copyBtn" onclick="copyResult()">コピー</div>
+          <div id="result"></div>
+        </div>
+
+      <script>
+        
+
+        function clearInput() {
+        document.getElementById("urlInput").value = "";
+        document.getElementById("result").textContent = "";
+        document.getElementById("resultWrapper").style.display = "none";
+      }
+
+
+        function copyResult() {
+          const text = document.getElementById("result").textContent;
+          navigator.clipboard.writeText(text).then(() => {
+            const btn = document.getElementById("copyBtn");
+            btn.textContent = "コピー済";
+            setTimeout(() => (btn.textContent = "コピー"), 800);
+          });
+        }
+      </script>
+      
+      <py-script>
+      import pandas as pd
+      import random
+      from pyodide.http import open_url
+      from js import document
+      
+      df = pd.read_csv(open_url("merosukaiseki.csv"), encoding="utf-8")
+      
+      pos_map = {
+          "補助記号-読点": "dokuten",
+          "補助記号-句点": "kuten",
+          "助詞-係助詞": "keijyoshi",
+          "助詞-格助詞": "kakujyoshi",
+          "名詞-普通名詞-一般": "hutsuumeishi_ippan",
+          "助動詞": "jyodoushi",
+          "動詞-非自立可能": "doushi_hijiritsu"
+      }
+      
+      pos_lists = {}
+      for pos, var_name in pos_map.items():
+          words = df.loc[df["品詞"] == pos, "単語"].dropna().tolist()
+          pos_lists[var_name] = words
+      
+      templates = [
+          [
+              "hutsuumeishi_ippan",
+              "keijyoshi",
+              "、",
+              "hutsuumeishi_ippan",
+              "kakujyoshi",
+              "hutsuumeishi_ippan",
+              "jyodoushi",
+              "doushi_hijiritsu",
+              "。"
+          ]
+      ]
+      
+      def generate_sentence():
+          template = random.choice(templates)
+          sentence = []
+      
+          for t in template:
+              if t in pos_lists:
+                  words = pos_lists[t]
+                  sentence.append(random.choice(words) if words else f"[{t}なし]")
+              else:
+                  sentence.append(t)
+      
+          return "".join(sentence)
+      
+      def extract_py():
+          result = generate_sentence()
+          document.getElementById("result").textContent = result
+          document.getElementById("resultWrapper").style.display = "block"
+      </py-script>
+
+
+      <p>
+        <a href="https://midomo.neocities.org/">Home</a>▸
+        <a href="https://midomo.neocities.org/dougubako/dougubako">道具箱</a>▸
+        Soundcloud引用
+      </p>
+    </div>
+  </body>
+</html>
