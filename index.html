@@ -74,11 +74,7 @@
         <div id="clearBtn" onclick="clearInput()">✕</div>
       </div>
 
-      <div>
-        <label><input type="checkbox" id="wrapP" checked> pタグで囲む</label>
-      </div>
-
-      <button py-click="extract_py">メロス化する</button>
+      <button onclick="runPython()">メロス化する</button>
 
         <div id="resultWrapper" style="display:none;" color=white>
           <div id="copyBtn" onclick="copyResult()">コピー</div>
@@ -86,6 +82,10 @@
         </div>
 
       <script>
+        async function runPython() {
+          await pyscript.runPythonAsync("extract_py()");
+        }
+
         
 
         function clearInput() {
