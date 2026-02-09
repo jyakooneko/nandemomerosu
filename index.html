@@ -3,17 +3,14 @@
   <head>
     <meta charset="UTF-8">
     <title>なんでもメロスコンバータ - 道具箱｜ここはmidomoの自由なことをするホームページなので、タイトルをどれだけ長くできるか挑戦してみます。楽市楽座。そう考えれば、最近のなろう系作品もこのようにしてタイトルが長くなっているのかもしれませんね。</title>
+
     <link href="https://midomo.neocities.org/style.css" rel="stylesheet">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@300;400&amp;display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://pyscript.net/releases/2024.1.1/core.css" />
-    <py-config>
-    packages = ["pandas"]
-    </py-config>
-    <script type="module" src="https://pyscript.net/releases/2024.1.1/core.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@300;400&display=swap" rel="stylesheet">
 
-
+    <!-- sudachi.js -->
+    <script src="https://unpkg.com/sudachi-js/dist/sudachi.js"></script>
 
     <style>
       #inputWrapper {
@@ -33,8 +30,6 @@
       #clearBtn:hover {
         background: #ddd;
       }
-
-      /* コピー部分 */
       #resultWrapper {
         margin-top: 12px;
         padding: 10px;
@@ -64,194 +59,23 @@
       }
     </style>
   </head>
+
   <body class="zen-kaku-gothic-new-light">
     <div class="contents">
       <h1>なんでもメロスコンバータ - Dougubako</h1>
       <p>てきとう。品詞とかごっちゃごちゃ。エンタメとして使ってね</p>
-      
+
       <div id="inputWrapper">
         <input id="urlInput" type="text" placeholder="走るな！メロス" style="flex:1;">
         <div id="clearBtn" onclick="clearInput()">✕</div>
       </div>
 
-      <button onclick="runPython()">メロス化する</button>
+      <button onclick="runMeros()">メロス化する</button>
 
-        <div id="resultWrapper" style="display:none;" color=white>
-          <div id="copyBtn" onclick="copyResult()">コピー</div>
-          <div id="result"></div>
-        </div>
-
-      <script>
-
-          function runPython() {
-          pyscript.runPython("extract_py()");
-        }
-
-        function clearInput() {
-        document.getElementById("urlInput").value = "";
-        document.getElementById("result").textContent = "";
-        document.getElementById("resultWrapper").style.display = "none";
-      }
-
-
-        function copyResult() {
-          const text = document.getElementById("result").textContent;
-          navigator.clipboard.writeText(text).then(() => {
-            const btn = document.getElementById("copyBtn");
-            btn.textContent = "コピー済";
-            setTimeout(() => (btn.textContent = "コピー"), 800);
-          });
-        }
-      </script>
-      
-      <py-script>
-        def extract_py():
-          import pandas as pd
-          import random
-          from pyodide.http import open_url
-          from js import document
-          
-          import MeCab
-          import unidic_lite
-          
-          def get_pos_tags_as_string(sentence):
-              # Explicitly specify the unidic-lite dictionary path for MeCab
-              unidic_path = unidic_lite.DICDIR
-              tagger = MeCab.Tagger(f'-d {unidic_path}')
-          
-              parsed_text = tagger.parse(sentence)
-              # print('Parsed text:\n', parsed_text) # Debug print, can be removed after verification
-              pos_tags = []
-              for line in parsed_text.split('\n'):
-                  if line == 'EOS' or not line:
-                      continue
-                  # print('Line:', line) # Debug print
-                  parts = line.split('\t')
-                  # print('Parts:', parts) # Debug print
-          
-                  if len(parts) > 4: # Ensure there is enough information for POS (parts[4] exists)
-                      # The full POS tag is in parts[4].
-                      full_pos_info = parts[4]
-          
-                      # Check if it's punctuation (補助記号) using the first part of the POS info
-                      main_pos_check = full_pos_info.split('-')[0].split(',')[0]
-          
-                      if main_pos_check == '補助記号':
-                          # If it's punctuation, use the surface form (the actual character)
-                          pos_tags.append(parts[0])
-                      else:
-                          # For other POS types, extract up to 6 layers of detail
-                          detailed_pos_parts = full_pos_info.replace(',', '-').split('-')
-                          # Join up to the first 6 parts to form the layered POS tag
-                          layered_pos_tag = '-'.join(detailed_pos_parts[:6])
-                          pos_tags.append(layered_pos_tag)
-              return ','.join(pos_tags)
-          
-          # Test with the example sentence from the task description
-          sentence = document.getElementById("urlInput").value
-          if not sentence:
-              sentence = "走るな！メロス"
-          
-          kaisekishitabun = get_pos_tags_as_string(sentence)
-          
-          
-          # 品詞と英語変数名の対応表
-          pos_map = {
-              "補助記号-読点": "dokuten",
-              "補助記号-句点": "kuten" ,
-              "助詞-係助詞": "keijyoshi" ,
-              "助詞-接続助詞":"setsuzokujyoshi",
-              "助詞-格助詞":"kakujyoshi",
-              "助詞-準体助詞":"jyuntaijyoshi",
-              "動詞-非自立可能":"doushi_hijiritsu",
-              "名詞-普通名詞-一般":"hutsuumeishi_ippan",
-              "補助記号-括弧開":"kakkokai",
-              "補助記号-括弧閉":"kakkotoji",
-              "空白":"kuuhaku",
-              "代名詞":"daimeishi",
-              "助動詞":"jyodoushi",
-              "連体詞":"rentaishi",
-              "形容詞-非自立可能":"keiyoushi_hijiritsu",
-              "助詞-終助詞":"syuujyoshi",
-              "名詞-固有名詞-人名-一般":"jinmei_ippan",
-              "感動詞-一般":"kanndoushi_ippan",
-              "助詞-副助詞":"hukujyoshi",
-              "形状詞-助動詞語幹":"keijyoushi_jyodoushigokan",
-              "名詞-数詞":"suushi",
-              "接頭辞":"settouji",
-              "動詞-一般":"doushi_ippan",
-              "副詞":"hukushi",
-              "接尾辞-名詞的-一般":"setsubiji_meishiteki_ippan",
-              "名詞-普通名詞-副詞可能":"meishi_hutsuumeishi_hukushikanou",
-              "名詞-普通名詞-サ変可能":"meishi_hutsuumeishi_sahenkanou",
-              "名詞-普通名詞-助数詞可能":"meishi_hutsuumeishi_jyosuushikanou",
-              "接続詞":"setsuzokushi",
-              "接尾辞-名詞的-助数詞":"setsubiji_meishiteki_jyosuushi",
-              "補助記号-一般":"hojyokigou_ippan",
-              "形容詞-一般":"keijyoushi_ippan",
-              "名詞-固有名詞-地名-一般":"meishi_koyuumeishi_chimei_ippan",
-              "形状詞-一般":"keijyoushi_ippan",
-              "名詞-固有名詞-人名-姓":"meishi_koyuumeishi_jinmei_sei",
-              "名詞-普通名詞-形状詞可能":"meishi_hutsuumeishi_keijyoushikanou",
-              "記号-一般":"kigou_ippan",
-              "感動詞-フィラー":"kandoushi_fira-",
-              "接尾辞-名詞的-サ変可能":"setsubiji_meishiteki_sahenkanou",
-              "形状詞-タリ":"keijyoushi_tari",
-              "名詞-固有名詞-一般":"meishi_koyuumeishi_ippan",
-              "名詞-固有名詞-人名-名":"meishi_koyuumeishi_jinmei_mei"
-          
-          }
-          
-          def convert_pos_list(japanese_pos_str):
-              items = japanese_pos_str.split(",")
-              converted = [pos_map.get(item.strip(), item.strip()) for item in items]
-              return converted # Return a list
-          
-          kaisekishita_hensuu = convert_pos_list(kaisekishitabun)
-          
-          import pandas as pd
-          import random
-          import time
-          
-          df = pd.read_csv("./merosukaiseki.csv", encoding="utf-8")
-          
-          
-          pos_lists = {}
-          
-          for pos, var_name in pos_map.items():
-              words = df.loc[df["品詞"] == pos, "単語"].dropna().tolist()
-              pos_lists[var_name] = words
-          
-          templates = [kaisekishita_hensuu] # Make templates a list of lists
-          
-          def generate_sentence():
-              template = random.choice(templates)
-              sentence = []
-          
-              for t in template:
-                  if t in pos_lists:
-                      words = pos_lists[t]
-                      if words:
-                          sentence.append(random.choice(words))
-                      else:
-                          sentence.append(f"[{t}なし]")
-                  else:
-                      # 固定文字列用
-                      sentence.append(t)
-          
-              return "".join(sentence)
-          
-          #そのまま
-          num_sentences = 1
-          sentences = [generate_sentence() for _ in range(num_sentences)]
-          
-          result_text = "\n".join(sentences)
-          
-          for s in sentences:
-              print(s)
-
-      </py-script>
-
+      <div id="resultWrapper" style="display:none;">
+        <div id="copyBtn" onclick="copyResult()">コピー</div>
+        <div id="result"></div>
+      </div>
 
       <p>
         <a href="https://midomo.neocities.org/">Home</a>▸
@@ -259,5 +83,130 @@
         なんでもメロスコンバータ
       </p>
     </div>
+
+    <script>
+      let tokenizer;
+      let posLists = {};
+
+      // ===== 品詞マップ（そのまま）=====
+      const posMap = {
+        "補助記号-読点": "dokuten",
+        "補助記号-句点": "kuten",
+        "助詞-係助詞": "keijyoshi",
+        "助詞-接続助詞": "setsuzokujyoshi",
+        "助詞-格助詞": "kakujyoshi",
+        "助詞-準体助詞": "jyuntaijyoshi",
+        "動詞-非自立可能": "doushi_hijiritsu",
+        "名詞-普通名詞-一般": "hutsuumeishi_ippan",
+        "補助記号-括弧開": "kakkokai",
+        "補助記号-括弧閉": "kakkotoji",
+        "空白": "kuuhaku",
+        "代名詞": "daimeishi",
+        "助動詞": "jyodoushi",
+        "連体詞": "rentaishi",
+        "形容詞-非自立可能": "keiyoushi_hijiritsu",
+        "助詞-終助詞": "syuujyoshi",
+        "名詞-固有名詞-人名-一般": "jinmei_ippan",
+        "感動詞-一般": "kanndoushi_ippan",
+        "助詞-副助詞": "hukujyoshi",
+        "形状詞-助動詞語幹": "keijyoushi_jyodoushigokan",
+        "名詞-数詞": "suushi",
+        "接頭辞": "settouji",
+        "動詞-一般": "doushi_ippan",
+        "副詞": "hukushi",
+        "接尾辞-名詞的-一般": "setsubiji_meishiteki_ippan",
+        "名詞-普通名詞-副詞可能": "meishi_hutsuumeishi_hukushikanou",
+        "名詞-普通名詞-サ変可能": "meishi_hutsuumeishi_sahenkanou",
+        "名詞-普通名詞-助数詞可能": "meishi_hutsuumeishi_jyosuushikanou",
+        "接続詞": "setsuzokushi",
+        "接尾辞-名詞的-助数詞": "setsubiji_meishiteki_jyosuushi",
+        "補助記号-一般": "hojyokigou_ippan",
+        "形容詞-一般": "keijyoushi_ippan",
+        "名詞-固有名詞-地名-一般": "meishi_koyuumeishi_chimei_ippan",
+        "形状詞-一般": "keijyoushi_ippan",
+        "名詞-固有名詞-人名-姓": "meishi_koyuumeishi_jinmei_sei",
+        "名詞-普通名詞-形状詞可能": "meishi_hutsuumeishi_keijyoushikanou",
+        "記号-一般": "kigou_ippan",
+        "感動詞-フィラー": "kandoushi_fira-",
+        "接尾辞-名詞的-サ変可能": "setsubiji_meishiteki_sahenkanou",
+        "形状詞-タリ": "keijyoushi_tari",
+        "名詞-固有名詞-一般": "meishi_koyuumeishi_ippan",
+        "名詞-固有名詞-人名-名": "meishi_koyuumeishi_jinmei_mei"
+      };
+
+      // ===== 初期化 =====
+      async function init() {
+        const dic = await Sudachi.Dictionary.load();
+        tokenizer = dic.create();
+        await loadCSV();
+      }
+
+      // ===== CSV 読み込み =====
+      async function loadCSV() {
+        const res = await fetch("./merosukaiseki.csv");
+        const text = await res.text();
+        const lines = text.split("\n");
+        lines.shift(); // header
+
+        for (const line of lines) {
+          if (!line.trim()) continue;
+          const [pos, word] = line.split(",");
+          if (!posLists[pos]) posLists[pos] = [];
+          posLists[pos].push(word);
+        }
+      }
+
+      // ===== 形態素解析 =====
+      function getPosList(sentence) {
+        const tokens = tokenizer.tokenize(sentence, Sudachi.Tokenizer.SplitMode.C);
+        const result = [];
+
+        for (const token of tokens) {
+          const pos = token.partOfSpeech();
+          if (pos[0] === "補助記号") {
+            result.push(token.surface());
+          } else {
+            result.push(pos.slice(0, 6).join("-"));
+          }
+        }
+        return result;
+      }
+
+      // ===== 生成 =====
+      function generateSentence(template) {
+        let out = "";
+        for (const t of template) {
+          if (posLists[t]) {
+            const words = posLists[t];
+            out += words[Math.floor(Math.random() * words.length)];
+          } else {
+            out += t;
+          }
+        }
+        return out;
+      }
+
+      function runMeros() {
+        const input = document.getElementById("urlInput").value || "走るな！メロス";
+        const posList = getPosList(input);
+        const sentence = generateSentence(posList);
+
+        document.getElementById("result").textContent = sentence;
+        document.getElementById("resultWrapper").style.display = "block";
+      }
+
+      function clearInput() {
+        document.getElementById("urlInput").value = "";
+        document.getElementById("result").textContent = "";
+        document.getElementById("resultWrapper").style.display = "none";
+      }
+
+      function copyResult() {
+        const text = document.getElementById("result").textContent;
+        navigator.clipboard.writeText(text);
+      }
+
+      init();
+    </script>
   </body>
 </html>
